@@ -17,6 +17,7 @@ from .const import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.components.http import StaticPathConfig
 
 
@@ -157,9 +158,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             _LOGGER.error(f"Failed to connect after {max_retries} attempts")
 
-    # Continue setup even if connection failed - coordinator will retry
     if not connected:
-        _LOGGER.warning("Starting integration with no initial connection - coordinator will retry")
+        raise ConfigEntryNotReady(
+            f"Failed to connect to MeshCore device at "
+            f"{entry.data.get(CONF_TCP_HOST, 'unknown')}:{entry.data.get(CONF_TCP_PORT, 5000)} "
+            f"after {max_retries} attempts"
+        )
 
     # TODO: remove this with contact refresh interval migration?
     # Get the messages interval for base update frequency
@@ -337,14 +341,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 hass.async_create_task(
                     coordinator.mqtt_uploader.async_publish_raw_event(event_type_str, sanitized_payload)
                 )
-            if hasattr(event, "type") and event.type == EventType.SELF_INFO and isinstance(event.payload, dict):
-                if getattr(coordinator, "map_uploader", None):
-                    coordinator.map_uploader.update_self_info(event.payload)
-            if hasattr(event, "type") and event.type == EventType.RX_LOG_DATA:
-                if getattr(coordinator, "map_uploader", None):
-                    hass.async_create_task(
-                        coordinator.map_uploader.async_handle_rx_log(event_type_str, event.payload)
-                    )
         except Exception as ex:
             _LOGGER.error(f"Error serializing event payload: {ex}")
             # Fire event without payload to ensure delivery
@@ -362,6 +358,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             None,
             forward_all_events
         )
+
+        if coordinator.map_uploader:
+
+            def map_self_info_handler(event):
+                if isinstance(event.payload, dict):
+                    coordinator.map_uploader.update_self_info(event.payload)
+
+            async def map_rx_log_handler(event):
+                await coordinator.map_uploader.async_handle_rx_log(
+                    str(event.type), event.payload
+                )
+
+            coordinator.api.mesh_core.subscribe(EventType.SELF_INFO, map_self_info_handler)
+            coordinator.api.mesh_core.subscribe(EventType.RX_LOG_DATA, map_rx_log_handler)
 
         # Subscribe to NEW_CONTACT events to track discovered contacts
         async def handle_new_contact(event):

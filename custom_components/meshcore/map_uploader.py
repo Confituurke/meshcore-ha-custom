@@ -4,16 +4,17 @@ Matches working of recrof/map.meshcore.dev-uploader.
 """
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 from typing import Any
 
+import aiohttp
+from cachetools import TTLCache
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_MAP_UPLOAD_ENABLED, CONF_PUBKEY
-from .logbook import EVENT_MESHCORE_MAP_UPLOAD
 
 try:
     import nacl.bindings
@@ -24,6 +25,7 @@ except ImportError:
 MAP_API_URL = "https://map.meshcore.dev/api/v1/uploader/node"
 ADVERT_TYPE_CHAT = 0
 REPLAY_COOLDOWN_SECONDS = 3600
+_SEEN_ADVERTS_MAX_SIZE = 1000
 
 
 def _extract_advert_payload_from_raw(raw_hex: str) -> bytes | None:
@@ -119,17 +121,11 @@ class MeshCoreMapUploader:
         self.enabled = bool(entry.data.get(CONF_MAP_UPLOAD_ENABLED, False))
         self.public_key = (entry.data.get(CONF_PUBKEY, "") or "").lower()
         self.private_key = ""
-        self._seen_adverts: dict[str, int] = {}
+        self._seen_adverts: TTLCache = TTLCache(
+            maxsize=_SEEN_ADVERTS_MAX_SIZE,
+            ttl=REPLAY_COOLDOWN_SECONDS,
+        )
         self._self_info: dict[str, Any] = {}
-        self._upload_lock = asyncio.Lock()
-
-    def _update_self_info(self, payload: dict) -> None:
-        """Update cached SELF_INFO for radio params."""
-        if not isinstance(payload, dict):
-            return
-        for key in ("radio_freq", "radio_bw", "radio_sf", "radio_cr"):
-            if key in payload and payload[key] is not None:
-                self._self_info[key] = payload[key]
 
     async def _ensure_private_key(self) -> bool:
         """Fetch private key from device if not yet available."""
@@ -213,24 +209,6 @@ class MeshCoreMapUploader:
             self.logger.error("Map Auto Uploader sign failed: %s", ex)
             return None
 
-    def _fire_logbook_event(
-        self,
-        success: bool,
-        node_name: str = "",
-        pubkey_prefix: str = "",
-        error: str = "",
-    ) -> None:
-        """Fire Map Auto Uploader event for logbook."""
-        self.hass.bus.async_fire(
-            EVENT_MESHCORE_MAP_UPLOAD,
-            {
-                "success": success,
-                "node_name": node_name,
-                "pubkey_prefix": pubkey_prefix,
-                "error": error,
-            },
-        )
-
     def _norm_param(self, val: float) -> int | float:
         """Normalize param for JSON: use int when whole number (matches JS JSON.stringify)."""
         return int(val) if val == int(val) else val
@@ -256,67 +234,44 @@ class MeshCoreMapUploader:
         signed = self._sign_upload_data(data)
         if not signed:
             return False
+        session = async_get_clientsession(self.hass)
+        timeout = aiohttp.ClientTimeout(total=15)
         try:
-            import urllib.request
-            import urllib.error
-
-            req = urllib.request.Request(
+            async with session.post(
                 MAP_API_URL,
-                data=json.dumps(signed).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-
-            def _do_post():
-                return urllib.request.urlopen(req, timeout=15)
-
-            async with self._upload_lock:
-                resp = await self.hass.async_add_executor_job(_do_post)
-            result = json.loads(resp.read().decode())
-            self.logger.info("Map Auto Uploader: uploaded node, response: %s", result)
-            self._fire_logbook_event(
-                success=True,
-                node_name=node_name,
-                pubkey_prefix=pubkey_prefix,
-            )
-            return True
-        except urllib.error.HTTPError as ex:
-            body = ""
-            try:
-                body = ex.read().decode("utf-8", errors="replace")
-            except Exception:
-                pass
-            err_msg = body or str(ex)
-            if "ERR_PARAMS_INVALID" in err_msg or "Params" in err_msg:
-                self.logger.warning(
-                    "Map Auto Uploader: params rejected (freq=%s, bw=%s, sf=%s, cr=%s) - %s",
-                    data["params"]["freq"],
-                    data["params"]["bw"],
-                    data["params"]["sf"],
-                    data["params"]["cr"],
-                    err_msg,
-                )
-            else:
-                self.logger.warning(
-                    "Map Auto Uploader: upload failed: HTTP %s - %s",
-                    ex.code,
-                    err_msg,
-                )
-            self._fire_logbook_event(
-                success=False,
-                node_name=node_name,
-                pubkey_prefix=pubkey_prefix,
-                error=err_msg,
-            )
+                json=signed,
+                timeout=timeout,
+            ) as resp:
+                body = await resp.text()
+                if resp.status >= 400:
+                    err_msg = body or f"HTTP {resp.status}"
+                    if "ERR_PARAMS_INVALID" in err_msg or "Params" in err_msg:
+                        self.logger.warning(
+                            "Map Auto Uploader: params rejected (freq=%s, bw=%s, sf=%s, cr=%s) - %s",
+                            data["params"]["freq"],
+                            data["params"]["bw"],
+                            data["params"]["sf"],
+                            data["params"]["cr"],
+                            err_msg,
+                        )
+                    else:
+                        self.logger.warning(
+                            "Map Auto Uploader: upload failed: HTTP %s - %s",
+                            resp.status,
+                            err_msg,
+                        )
+                    return False
+                try:
+                    result = json.loads(body) if body else {}
+                except json.JSONDecodeError:
+                    result = {}
+                self.logger.info("Map Auto Uploader: uploaded node, response: %s", result)
+                return True
+        except aiohttp.ClientError as ex:
+            self.logger.warning("Map Auto Uploader: upload failed: %s", ex)
             return False
         except Exception as ex:
             self.logger.warning("Map Auto Uploader: upload failed: %s", ex)
-            self._fire_logbook_event(
-                success=False,
-                node_name=node_name,
-                pubkey_prefix=pubkey_prefix,
-                error=str(ex),
-            )
             return False
 
     async def async_handle_rx_log(self, event_type: str, payload: Any) -> None:
@@ -370,5 +325,9 @@ class MeshCoreMapUploader:
             self._seen_adverts[adv_key] = adv_timestamp
 
     def update_self_info(self, payload: dict) -> None:
-        """Update radio params from SELF_INFO event."""
-        self._update_self_info(payload)
+        """Update cached SELF_INFO radio params from device events."""
+        if not isinstance(payload, dict):
+            return
+        for key in ("radio_freq", "radio_bw", "radio_sf", "radio_cr"):
+            if key in payload and payload[key] is not None:
+                self._self_info[key] = payload[key]
