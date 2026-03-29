@@ -27,14 +27,22 @@
       "usb": {
         "data": {
           "usb_path": "USB-apparaat pad",
-          "baudrate": "Verbindingssnelheid"
+          "baudrate": "Verbindingssnelheid",
+          "map_upload_enabled": "Schakel Map Auto Uploader in (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "Als dit is ingeschakeld, worden advertenties van repeaters en room servers die u ontvangt geüpload naar map.meshcore.dev. Die knooppunten verschijnen op de officiële MeshCore-kaart voor de community."
         },
         "description": "Maak verbinding met uw MeshCore-node via USB",
         "title": "Configureer USB-verbinding"
       },
       "ble": {
         "data": {
-          "ble_address": "Bluetooth-apparaat"
+          "ble_address": "Bluetooth-apparaat",
+          "map_upload_enabled": "Schakel Map Auto Uploader in (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "Als dit is ingeschakeld, worden advertenties van repeaters en room servers die u ontvangt geüpload naar map.meshcore.dev. Die knooppunten verschijnen op de officiële MeshCore-kaart voor de community."
         },
         "description": "Maak verbinding met uw MeshCore-node via Bluetooth",
         "title": "Configureer Bluetooth-verbinding"
@@ -42,7 +50,11 @@
       "tcp": {
         "data": {
           "tcp_host": "Hostadres",
-          "tcp_port": "Poort"
+          "tcp_port": "Poort",
+          "map_upload_enabled": "Schakel Map Auto Uploader in (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "Als dit is ingeschakeld, worden advertenties van repeaters en room servers die u ontvangt geüpload naar map.meshcore.dev. Die knooppunten verschijnen op de officiële MeshCore-kaart voor de community."
         },
         "description": "Maak verbinding met uw MeshCore-node via het netwerk",
         "title": "Configureer Netwerkverbinding"

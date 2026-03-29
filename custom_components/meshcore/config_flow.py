@@ -222,7 +222,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                     CONF_PUBKEY: info.get("pubkey"),
                     CONF_REPEATER_SUBSCRIPTIONS: [],
                     CONF_TRACKED_CLIENTS: [],
-                    CONF_MAP_UPLOAD_ENABLED: False,
+                    CONF_MAP_UPLOAD_ENABLED: user_input.get(CONF_MAP_UPLOAD_ENABLED, False),
                 })
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -239,6 +239,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                 vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): cv.positive_int,
                 vol.Optional(CONF_SELF_TELEMETRY_ENABLED, default=False): cv.boolean,
                 vol.Optional(CONF_SELF_TELEMETRY_INTERVAL, default=DEFAULT_SELF_TELEMETRY_INTERVAL): vol.All(cv.positive_int, vol.Range(min=60, max=3600)),
+                vol.Optional(CONF_MAP_UPLOAD_ENABLED, default=False): cv.boolean,
             }),
             errors=errors
         )
@@ -259,7 +260,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                     CONF_PUBKEY: info.get("pubkey"),
                     CONF_REPEATER_SUBSCRIPTIONS: [],
                     CONF_TRACKED_CLIENTS: [],
-                    CONF_MAP_UPLOAD_ENABLED: False,
+                    CONF_MAP_UPLOAD_ENABLED: user_input.get(CONF_MAP_UPLOAD_ENABLED, False),
                 })
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -285,6 +286,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                     vol.Required(CONF_BLE_ADDRESS): vol.In(devices),
                     vol.Optional(CONF_SELF_TELEMETRY_ENABLED, default=False): cv.boolean,
                     vol.Optional(CONF_SELF_TELEMETRY_INTERVAL, default=DEFAULT_SELF_TELEMETRY_INTERVAL): vol.All(cv.positive_int, vol.Range(min=60, max=3600)),
+                    vol.Optional(CONF_MAP_UPLOAD_ENABLED, default=False): cv.boolean,
                 }
             )
         else:
@@ -293,6 +295,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                 vol.Required(CONF_BLE_ADDRESS): str,
                 vol.Optional(CONF_SELF_TELEMETRY_ENABLED, default=False): cv.boolean,
                 vol.Optional(CONF_SELF_TELEMETRY_INTERVAL, default=DEFAULT_SELF_TELEMETRY_INTERVAL): vol.All(cv.positive_int, vol.Range(min=60, max=3600)),
+                vol.Optional(CONF_MAP_UPLOAD_ENABLED, default=False): cv.boolean,
             })
 
         return self.async_show_form(
@@ -316,7 +319,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                     CONF_PUBKEY: info.get("pubkey"),
                     CONF_REPEATER_SUBSCRIPTIONS: [],
                     CONF_TRACKED_CLIENTS: [],
-                    CONF_MAP_UPLOAD_ENABLED: False,
+                    CONF_MAP_UPLOAD_ENABLED: user_input.get(CONF_MAP_UPLOAD_ENABLED, False),
                 })
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -331,6 +334,7 @@ class MeshCoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type: igno
                 vol.Optional(CONF_TCP_PORT, default=DEFAULT_TCP_PORT): cv.port,
                 vol.Optional(CONF_SELF_TELEMETRY_ENABLED, default=False): cv.boolean,
                 vol.Optional(CONF_SELF_TELEMETRY_INTERVAL, default=DEFAULT_SELF_TELEMETRY_INTERVAL): vol.All(cv.positive_int, vol.Range(min=60, max=3600)),
+                vol.Optional(CONF_MAP_UPLOAD_ENABLED, default=False): cv.boolean,
             }),
             errors=errors
         )

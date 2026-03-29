@@ -27,14 +27,22 @@
       "usb": {
         "data": {
           "usb_path": "Cesta k zariadeniu USB",
-          "baudrate": "Rýchlosť pripojenia"
+          "baudrate": "Rýchlosť pripojenia",
+          "map_upload_enabled": "Povoliť Map Auto Uploader (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "Ak je zapnuté, reklamy od repeaterov a room serverov, ktoré prijmete, sa nahrávajú na map.meshcore.dev. Tieto uzly sa zobrazia na oficiálnej mape MeshCore pre komunitu."
         },
         "description": "Pripojte sa k vášmu uzlu MeshCore prostredníctvom USB",
         "title": "Nastaviť USB pripojenie"
       },
       "ble": {
         "data": {
-          "ble_address": "Bluetooth zariadenie"
+          "ble_address": "Bluetooth zariadenie",
+          "map_upload_enabled": "Povoliť Map Auto Uploader (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "Ak je zapnuté, reklamy od repeaterov a room serverov, ktoré prijmete, sa nahrávajú na map.meshcore.dev. Tieto uzly sa zobrazia na oficiálnej mape MeshCore pre komunitu."
         },
         "description": "Pripojte sa k vášmu uzlu MeshCore prostredníctvom Bluetooth",
         "title": "Nastaviť pripojenie Bluetooth"
@@ -42,7 +50,11 @@
       "tcp": {
         "data": {
           "tcp_host": "Adresa hostiteľa",
-          "tcp_port": "Port"
+          "tcp_port": "Port",
+          "map_upload_enabled": "Povoliť Map Auto Uploader (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "Ak je zapnuté, reklamy od repeaterov a room serverov, ktoré prijmete, sa nahrávajú na map.meshcore.dev. Tieto uzly sa zobrazia na oficiálnej mape MeshCore pre komunitu."
         },
         "description": "Pripojte sa k vášmu uzlu MeshCore prostredníctvom siete",
         "title": "Nastaviť sieťové pripojenie"

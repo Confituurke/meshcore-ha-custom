@@ -17,15 +17,19 @@ When enabled, the integration automatically uploads repeater and room server adv
 
 ## Enable Map Auto Uploader
 
+**When adding the integration:** on the USB, Bluetooth, or TCP connection step, you can enable **Enable Map Auto Uploader (map.meshcore.dev)** before finishing the wizard.
+
+During setup it's off by default.
+
+To change it later (or if you skipped it during setup):
+
 1. Go to **Settings** → **Devices & Services**
 2. Open your **MeshCore** integration → **Configure** → **Global Settings**
 3. Enable **Enable Map Auto Uploader (map.meshcore.dev)**
 
-Map Auto Uploader is **off by default**.
-
 ## Requirements
 
-- **Private key export** — Firmware must have `ENABLE_PRIVATE_KEY_EXPORT=1`. If disabled, Map Auto Uploader cannot start. Check logs for `Private key export command failed`.
+- **Private key export** — Node firmware must support `export_private_key()` (for example `ENABLE_PRIVATE_KEY_EXPORT=1`). The integration still loads, but map uploads cannot be signed without it. Check logs for `Private key export command failed` or `Map Auto Uploader: cannot sign`.
 
 ## How It Works
 
@@ -36,7 +40,7 @@ Map Auto Uploader is **off by default**.
 
 ## Troubleshooting
 
-1. **Enable in Global Settings** — Ensure the option is enabled (see above)
+1. **Enable in Global Settings** — Ensure the option is enabled
 2. **Check private key export** — Firmware must have `ENABLE_PRIVATE_KEY_EXPORT=1`
 3. **Verify connectivity** — Your node must receive adverts from repeaters/room servers
 4. **Check logs** — Look for `meshcore` or Map Auto Uploader messages
