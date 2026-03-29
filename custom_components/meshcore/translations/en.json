@@ -27,14 +27,22 @@
       "usb": {
         "data": {
           "usb_path": "USB Device Path",
-          "baudrate": "Connection Speed"
+          "baudrate": "Connection Speed",
+          "map_upload_enabled": "Enable Map Auto Uploader (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "When enabled, adverts from repeaters and room servers you receive are uploaded to map.meshcore.dev. Those nodes appear on the official MeshCore map for the community."
         },
         "description": "Connect to your MeshCore node via USB",
         "title": "Configure USB Connection"
       },
       "ble": {
         "data": {
-          "ble_address": "Bluetooth Device"
+          "ble_address": "Bluetooth Device",
+          "map_upload_enabled": "Enable Map Auto Uploader (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "When enabled, adverts from repeaters and room servers you receive are uploaded to map.meshcore.dev. Those nodes appear on the official MeshCore map for the community."
         },
         "description": "Connect to your MeshCore node via Bluetooth",
         "title": "Configure Bluetooth Connection"
@@ -42,7 +50,11 @@
       "tcp": {
         "data": {
           "tcp_host": "Host Address",
-          "tcp_port": "Port"
+          "tcp_port": "Port",
+          "map_upload_enabled": "Enable Map Auto Uploader (map.meshcore.dev)"
+        },
+        "data_description": {
+          "map_upload_enabled": "When enabled, adverts from repeaters and room servers you receive are uploaded to map.meshcore.dev. Those nodes appear on the official MeshCore map for the community."
         },
         "description": "Connect to your MeshCore node over the network",
         "title": "Configure Network Connection"
